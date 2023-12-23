@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "captcha-recognition"
+version = "0.1.0"
+description = ""
+authors = ["Ilya Dashkevich x Kuba Dusza"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+rich = "^13.7.0"
+keras = ">=2.13.1,<2.14"
+tensorflow-macos = "2.13.0"
+tensorflow-metal = "^1.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

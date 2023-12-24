@@ -1,0 +1,9 @@
+rich 
+keras
+tensorflow-macos
+tensorflow-metal
+datasets
+pillow 
+scikit-learn
+opencv-python
+

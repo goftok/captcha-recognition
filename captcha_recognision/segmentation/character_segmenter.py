@@ -1,3 +1,4 @@
+# TODO
 class CharacterSegmenter:
     def __init__(self):
         pass

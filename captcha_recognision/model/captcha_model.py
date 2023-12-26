@@ -1,5 +1,6 @@
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
+
 from captcha_recognision.utils.console import console
 
 
@@ -15,33 +16,44 @@ class CaptchaModel:
         :param num_classes: Number of distinct characters in the CAPTCHA
         :return: CNN model
         """
+        # Create a sequential model
         model = tf.keras.Sequential()
 
-        model.add(tf.keras.layers.Conv2D(filters=16, kernel_size=(3, 3), padding="same", input_shape=input_shape))
+        # Convolutional layer 1
+        model.add(tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding="same", input_shape=input_shape))
         model.add(tf.keras.layers.Activation("relu"))
         model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
 
-        model.add(tf.keras.layers.Conv2D(filters=16, kernel_size=(3, 3), padding="same"))
+        # Convolutional layer 2
+        model.add(tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), padding="same"))
         model.add(tf.keras.layers.Activation("relu"))
         model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
 
-        model.add(tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding="same"))
+        # Convolutional layer 3
+        model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), padding="same"))
         model.add(tf.keras.layers.Activation("relu"))
         model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
 
-        model.add(tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding="same"))
+        # Convolutional layer 4
+        model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=(3, 3), padding="same"))
         model.add(tf.keras.layers.Activation("relu"))
         model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
 
+        # Flattening and Dense layers
         model.add(tf.keras.layers.Flatten())
         model.add(tf.keras.layers.Dropout(0.4))
-        model.add(tf.keras.layers.Dense(1500))
-        model.add(tf.keras.layers.Activation("relu"))
-        model.add(tf.keras.layers.Dropout(0.2))
-        model.add(tf.keras.layers.Dense(num_classes))
-        model.add(tf.keras.layers.Activation("softmax"))
+        model.add(tf.keras.layers.Dense(512, activation="relu"))
 
-        opt = tf.keras.optimizers.legacy.Adam(learning_rate=0.001)
+        model.add(tf.keras.layers.Dropout(0.2))
+        model.add(tf.keras.layers.Dense(num_classes, activation="softmax"))
+
+        lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+            initial_learning_rate=0.0005,
+            decay_steps=10000,
+            decay_rate=0.9,
+        )
+
+        opt = tf.keras.optimizers.legacy.Adam(learning_rate=lr_schedule)
 
         model.compile(
             loss="categorical_crossentropy",
@@ -50,38 +62,6 @@ class CaptchaModel:
         )
 
         console.print(model.summary())
-
-        # model = Sequential()
-
-        # # Convolutional layer 1
-        # model.add(Conv2D(32, (3, 3), activation="relu", input_shape=input_shape))
-        # model.add(Activation("relu"))
-        # model.add(MaxPooling2D(pool_size=(2, 2)))
-
-        # # Convolutional layer 2
-        # model.add(Conv2D(64, (3, 3), activation="relu"))
-        # model.add(Activation("relu"))
-        # model.add(MaxPooling2D((2, 2)))
-
-        # # Convolutional layer 3
-        # model.add(Conv2D(128, (3, 3), activation="relu"))
-        # model.add(Activation("relu"))
-        # model.add(MaxPooling2D((2, 2)))
-
-        # # Flattening and Dense layers
-        # model.add(Flatten())
-        # model.add(Dense(64, activation="relu"))
-        # model.add(Dropout(0.5))
-        # model.add(Dense(num_classes, activation="softmax"))
-
-        # # Compile the model
-        # model.compile(
-        #     optimizer="adam",
-        #     loss="categorical_crossentropy",
-        #     metrics=["accuracy"],
-        # )
-
-        # console.print(model.summary())
 
         return model
 
@@ -107,7 +87,7 @@ class CaptchaModel:
 
         early_stopping = tf.keras.callbacks.EarlyStopping(
             monitor="val_loss",
-            patience=5,
+            patience=10,
             restore_best_weights=True,
         )
 
@@ -120,7 +100,7 @@ class CaptchaModel:
             callbacks=[early_stopping],
         )
 
-    def predict(self, image, info, verbose=1):
+    def predict(self, image, label_encoding_map, verbose=1) -> str:
         """
         Predict the CAPTCHA text from a given image.
 
@@ -132,11 +112,11 @@ class CaptchaModel:
             image = np.expand_dims(image, axis=0)
 
         predictions = self.model.predict(image, verbose=verbose)
-        predicted_text = "".join(info[np.argmax(pred)] for pred in predictions)
+        predicted_text = "".join(label_encoding_map[np.argmax(pred)] for pred in predictions)
 
         return predicted_text
 
-    def save(self, model_path=None):
+    def save(self, model_path=None) -> None:
         """
         Save the model to the given path.
 
